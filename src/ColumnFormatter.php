@@ -77,15 +77,15 @@ class ColumnFormatter
      */
     protected function getOutput(array $data, int $width, int $height) : string
     {
-        $rowChunk = floor(count($data) / $height);
+        $sizeRow = floor(count($data) / $height);
         $output = PHP_EOL;
 
         foreach ($data as $i => $column) {
             $output .= $this->normalize($column, $width);
 
-            $isRowChunk = (($i + 1) % $rowChunk) === 0;
+            $isRow = (($i + 1) % $sizeRow) === 0;
 
-            if ($isRowChunk) {
+            if ($isRow) {
                 $output .= PHP_EOL;
             }
         }

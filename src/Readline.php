@@ -44,6 +44,9 @@ class Readline
         $this->init();
     }
 
+    /**
+     * @uses Readline::onCompletion()
+     */
     protected function init()
     {
         $this->completionFunction([$this, 'onCompletion']);
@@ -63,7 +66,6 @@ class Readline
 
     /**
      * @param CompleteInterface $completer
-     * @uses Readline::onCompletion()
      */
     public function registerCompleter(CompleteInterface $completer)
     {
