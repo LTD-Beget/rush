@@ -16,16 +16,26 @@ class Printer implements PrinterInterface
      */
     protected $output;
 
+    /**
+     * @var ColumnFormatter
+     */
+    protected $columnFormatter;
 
     /**
-     * This method will be called before Rush started
-     *
-     * @param OutputInterface $output
-     * @return void
+     * @var int
      */
-    public function init(OutputInterface $output)
+    protected $helpSize;
+
+    /**
+     * Printer constructor.
+     * @param OutputInterface $output
+     * @param int $helpSize
+     */
+    public function __construct(OutputInterface $output, int $helpSize)
     {
         $this->output = $output;
+        $this->helpSize = $helpSize;
+        $this->columnFormatter = new ColumnFormatter();
         $this->initStyles();
     }
 
@@ -45,6 +55,12 @@ class Printer implements PrinterInterface
         $this->printEmpty(2);
     }
 
+    public function printHelp(array $help)
+    {
+        $output = $this->columnFormatter->format($help, $this->helpSize, $this->getWidthScreen());
+        $this->output->writeln($output);
+    }
+
     protected function initStyles()
     {
         $formatter = $this->output->getFormatter();
@@ -60,6 +76,14 @@ class Printer implements PrinterInterface
     protected function stylish(string $value, string $style)
     {
         return sprintf('<%2$s>%1$s</%2$s>', $value, $style);
+    }
+
+    /**
+     * @return int
+     */
+    protected function getWidthScreen() : int
+    {
+        return 40;
     }
 
 }

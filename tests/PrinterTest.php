@@ -13,9 +13,10 @@ class PrinterTest extends \PHPUnit_Framework_TestCase
      */
     public function testStylish()
     {
-        $method = new \ReflectionMethod(Printer::class, 'stylish');
+        $class = new \ReflectionClass(Printer::class);
+        $method = $class->getMethod('stylish');
         $method->setAccessible(true);
-        $actual = $method->invoke(new Printer(), 'some string', 'style');
+        $actual = $method->invoke($class->newInstanceWithoutConstructor(), 'some string', 'style');
         $expected = '<style>some string</style>';
 
         $this->assertEquals($expected, $actual);

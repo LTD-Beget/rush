@@ -3,6 +3,7 @@
 namespace LTDBeget\Rush;
 
 
+use LTDBeget\Rush\Events\Core\ShowHelpEvent;
 use LTDBeget\Rush\Events\Readline\BeforeReadEvent;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -18,11 +19,6 @@ class RunCommand extends Command
     protected $config;
 
     /**
-     * @var PrinterInterface
-     */
-    protected $printer;
-
-    /**
      * @var ReflectorInterface
      */
     protected $reflector;
@@ -35,22 +31,6 @@ class RunCommand extends Command
         $this->config = $config;
 
         parent::__construct(null);
-    }
-
-    /**
-     * @param PrinterInterface $printer
-     */
-    public function setPrinter(PrinterInterface $printer)
-    {
-        $this->printer = $printer;
-    }
-
-    /**
-     * @return PrinterInterface
-     */
-    public function getPrinter() : PrinterInterface
-    {
-        return $this->printer;
     }
 
     /**
@@ -76,23 +56,24 @@ class RunCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->printer->init($output);
+        $printer = new Printer($output, $this->config['help']['size']);
 
         $dispatcher = new EventDispatcher();
 
-        $core = new Core($dispatcher, $this->printer);
-        $core->setShowHelp($this->config['help']['show']);
+        $api = new API();
+        $helpResolver = new HelpResolver($api, $this->config['help']['show'], $this->config['help']['sub']);
 
+        $core = new Core($dispatcher, $helpResolver, $printer);
 
         $dispatcher->addListener(BeforeReadEvent::NAME, [$core, 'onReadlineBeforeRead']);
 
-        $this->printer->printWelcome();
+        $printer->printWelcome();
 
         $readline = new Readline($dispatcher, $this->config['prompt']);
 
         $readline->read();
 
-        $this->printer->printBye();
+        $printer->printBye();
     }
 
 

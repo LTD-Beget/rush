@@ -19,7 +19,6 @@ $config = $processor->processConfiguration($configuration, ['rush' => $params]);
 
 $command = new \LTDBeget\Rush\RunCommand($config);
 
-$command->setPrinter(new \LTDBeget\Rush\Printer());
 $command->setReflector(new \LTDBeget\Rush\Reflector());
 
 $app = new SC\Console\Application();

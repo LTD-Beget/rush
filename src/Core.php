@@ -16,6 +16,11 @@ class Core
     protected $dispatcher;
 
     /**
+     * @var HelpResolver
+     */
+    protected $helpResolver;
+
+    /**
      * @var PrinterInterface
      */
     protected $printer;
@@ -23,59 +28,30 @@ class Core
     /**
      * @var string
      */
-    protected $_showHelp;
-
-    /**
-     * @var bool
-     */
-    protected $helpShown = false;
-
-    /**
-     * @var string
-     */
-    protected $context;
-
+    protected $context = null;
 
     /**
      * Core constructor.
      * @param EventDispatcherInterface $dispatcher
+     * @param HelpResolver $helpResolver
      * @param PrinterInterface $printer
      */
-    public function __construct(EventDispatcherInterface $dispatcher, PrinterInterface $printer)
+    public function __construct(EventDispatcherInterface $dispatcher, HelpResolver $helpResolver, PrinterInterface $printer)
     {
         $this->dispatcher = $dispatcher;
+        $this->helpResolver = $helpResolver;
         $this->printer = $printer;
     }
 
-    public function onReadlineBeforeRead(BeforeReadEvent $event)
+    public function onReadlineBeforeRead()
     {
         $this->resolveOutput();
     }
 
-    /**
-     * @param string $showHelp
-     */
-    public function setShowHelp(string $showHelp)
-    {
-        $this->_showHelp = $showHelp;
-    }
-
     protected function resolveOutput()
     {
-        if($this->_showHelp === ConfigInterface::SHOW_HELP_NEVER) {
-            return;
-        }
-
-        if($this->_showHelp === ConfigInterface::SHOW_HELP_ONCE) {
-            if($this->helpShown) {
-               return;
-            }
-
-            $this->helpShown = true;
-        }
-
-        $event = new ShowHelpEvent([]);
-        $this->dispatcher->dispatch(ShowHelpEvent::NAME, $event);
+        $help = $this->helpResolver->resolve($this->context);
+        $this->printer->printHelp($help);
     }
 
 }
