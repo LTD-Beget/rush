@@ -6,6 +6,7 @@ namespace LTDBeget\Rush;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
+
 class Configuration implements ConfigurationInterface
 {
 
@@ -20,6 +21,12 @@ class Configuration implements ConfigurationInterface
 
         $rootNode = $treeBuilder->root('rush');
 
+        $showHelp = [
+            ConfigInterface::SHOW_HELP_NEVER,
+            ConfigInterface::SHOW_HELP_ALWAYS,
+            ConfigInterface::SHOW_HELP_ONCE,
+        ];
+
         $rootNode
             ->children()
                 ->scalarNode('prompt')
@@ -31,9 +38,20 @@ class Configuration implements ConfigurationInterface
                 ->booleanNode('show_trace')
                     ->defaultFalse()
                 ->end()
-                ->enumNode('show_help')
-                    ->values(['always', 'once', 'never'])
-                    ->defaultValue('once')
+                ->arrayNode('help')
+                    ->children()
+                        ->enumNode('show')
+                            ->values($showHelp)
+                            ->defaultValue(ConfigInterface::SHOW_HELP_ONCE)
+                        ->end()
+                        ->scalarNode('height')
+                            ->defaultValue(10)
+                        ->end()
+                        ->booleanNode('sub')
+                            ->defaultValue(false)
+                        ->end()
+                    ->end()
+                ->end()
             ->end();
 
         return $treeBuilder;

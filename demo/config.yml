@@ -1,5 +1,8 @@
-rush:
-  prompt: rush
-  ignore: [foo, bar]
-  show_trace: false
-  show_help: once
+prompt: rush
+ignore: [foo, bar]
+show_trace: false
+show_help: once
+help:
+  show: once
+  size: 10
+  sub: false

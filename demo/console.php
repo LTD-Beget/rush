@@ -1,3 +1,4 @@
+#!/usr/bin/env php
 <?php
 
 use \Symfony\Component as SC;
@@ -13,11 +14,13 @@ $params = SC\Yaml\Yaml::parse(file_get_contents(__DIR__ . '/config.yml'));
 $processor = new SC\Config\Definition\Processor();
 $configuration = new \LTDBeget\Rush\Configuration();
 
-$config = $processor->processConfiguration($configuration, $params);
+$config = $processor->processConfiguration($configuration, ['rush' => $params]);
+
 
 $command = new \LTDBeget\Rush\RunCommand($config);
 
 $command->setPrinter(new \LTDBeget\Rush\Printer());
+$command->setReflector(new \LTDBeget\Rush\Reflector());
 
 $app = new SC\Console\Application();
 
