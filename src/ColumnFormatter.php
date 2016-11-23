@@ -77,7 +77,8 @@ class ColumnFormatter
      */
     protected function getOutput(array $data, int $width, int $height) : string
     {
-        $sizeRow = floor(count($data) / $height);
+        $sizeRow = ceil(count($data) / $height);
+
         $output = PHP_EOL;
 
         foreach ($data as $i => $column) {

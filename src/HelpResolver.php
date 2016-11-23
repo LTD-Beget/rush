@@ -6,6 +6,8 @@ namespace LTDBeget\Rush;
 class HelpResolver
 {
 
+    const DISABLE = false;
+
     /**
      * @var API
      */
@@ -27,6 +29,11 @@ class HelpResolver
     protected $sub;
 
     /**
+     * @var array
+     */
+    protected $help = [];
+
+    /**
      * HelpResolver constructor.
      * @param API $api
      * @param string $show
@@ -40,20 +47,19 @@ class HelpResolver
     }
 
     /**
+     * TODO: make caching results?
      * @param string $context
-     * @return array
+     * @return array|FALSE
      */
-    public function resolve(string $context) : array
+    public function resolve(string $context = null)
     {
-        $help = [];
-
         if ($this->show === ConfigInterface::SHOW_HELP_NEVER) {
-            return $help;
+            return self::DISABLE;
         }
 
         if ($this->show === ConfigInterface::SHOW_HELP_ONCE) {
             if ($this->shown) {
-                return $help;
+                return self::DISABLE;
             }
 
             $this->shown = true;

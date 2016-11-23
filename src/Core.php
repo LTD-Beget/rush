@@ -3,8 +3,6 @@
 namespace LTDBeget\Rush;
 
 
-use LTDBeget\Rush\Events\Core\ShowHelpEvent;
-use LTDBeget\Rush\Events\Readline\BeforeReadEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class Core
@@ -48,10 +46,16 @@ class Core
         $this->resolveOutput();
     }
 
+    /**
+     * TODO: cache DISABLE?
+     */
     protected function resolveOutput()
     {
         $help = $this->helpResolver->resolve($this->context);
-        $this->printer->printHelp($help);
+
+        if ($help !== HelpResolver::DISABLE) {
+            $this->printer->printHelp($help);
+        }
     }
 
 }

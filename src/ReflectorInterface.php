@@ -17,4 +17,10 @@ interface ReflectorInterface
      */
     public function options(string $command) : array;
 
+    /**
+     * If none, return ''
+     * @return string
+     */
+    public function getSeparator() : string;
+
 }

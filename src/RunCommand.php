@@ -3,7 +3,6 @@
 namespace LTDBeget\Rush;
 
 
-use LTDBeget\Rush\Events\Core\ShowHelpEvent;
 use LTDBeget\Rush\Events\Readline\BeforeReadEvent;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -60,11 +59,14 @@ class RunCommand extends Command
 
         $dispatcher = new EventDispatcher();
 
-        $api = new API();
+        $api = new API($this->reflector);
         $helpResolver = new HelpResolver($api, $this->config['help']['show'], $this->config['help']['sub']);
 
         $core = new Core($dispatcher, $helpResolver, $printer);
 
+        /**
+         * @uses Core::onReadlineBeforeRead()
+         */
         $dispatcher->addListener(BeforeReadEvent::NAME, [$core, 'onReadlineBeforeRead']);
 
         $printer->printWelcome();
