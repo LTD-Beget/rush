@@ -3,6 +3,7 @@
 namespace LTDBeget\Rush;
 
 
+use LTDBeget\Rush\Events\Readline\BeforeReadEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class Core
@@ -19,7 +20,7 @@ class Core
     protected $helpResolver;
 
     /**
-     * @var PrinterInterface
+     * @var Printer
      */
     protected $printer;
 
@@ -32,16 +33,19 @@ class Core
      * Core constructor.
      * @param EventDispatcherInterface $dispatcher
      * @param HelpResolver $helpResolver
-     * @param PrinterInterface $printer
+     * @param Printer $printer
      */
-    public function __construct(EventDispatcherInterface $dispatcher, HelpResolver $helpResolver, PrinterInterface $printer)
+    public function __construct(EventDispatcherInterface $dispatcher, HelpResolver $helpResolver, Printer $printer)
     {
         $this->dispatcher = $dispatcher;
         $this->helpResolver = $helpResolver;
         $this->printer = $printer;
     }
 
-    public function onReadlineBeforeRead()
+    /**
+     * @param BeforeReadEvent $event
+     */
+    public function onReadlineBeforeRead(BeforeReadEvent $event)
     {
         $this->resolveOutput();
     }

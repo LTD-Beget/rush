@@ -23,10 +23,10 @@ class API
     /**
      * Если есть такая комманда, вернет опшены, если есть
      * такая super группа вернет все sub
-     * @param $value
+     * @param string $value
      * @return array
      */
-    public function find($value) : array
+    public function find(string $value) : array
     {
         $commands = $this->reflector->commands();
 

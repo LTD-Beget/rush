@@ -6,6 +6,8 @@ namespace LTDBeget\Rush;
 interface ReflectorInterface
 {
 
+    const NONE_SEPARATOR = '';
+
     /**
      * @return array
      */
@@ -18,7 +20,7 @@ interface ReflectorInterface
     public function options(string $command) : array;
 
     /**
-     * If none, return ''
+     * If none, return self::NONE_SEPARATOR
      * @return string
      */
     public function getSeparator() : string;
