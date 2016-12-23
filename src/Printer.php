@@ -6,7 +6,7 @@ namespace LTDBeget\Rush;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class Printer implements PrinterInterface
+class Printer
 {
 
     const STYLE_PRIMARY = 'primary';

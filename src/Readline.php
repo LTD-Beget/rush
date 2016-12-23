@@ -30,7 +30,6 @@ class Readline
      */
     protected $dispatcher;
 
-
     /**
      * Readline constructor.
      * @param EventDispatcherInterface $dispatcher
@@ -76,7 +75,7 @@ class Readline
      * @param string $current
      * @return array
      */
-    protected function onCompletion(string $current) : array
+    protected function onCompletion(string $current): array
     {
         $prev = $this->getPrev($current);
 
@@ -86,7 +85,7 @@ class Readline
     /**
      * @return string
      */
-    protected function loadPrompt() : string
+    protected function loadPrompt(): string
     {
         return exec(sprintf('echo "%s"', "rush> "));
     }
@@ -95,7 +94,7 @@ class Readline
      * @param string $input
      * @return string
      */
-    protected function getPrev(string $input) : string
+    protected function getPrev(string $input): string
     {
         $line = $this->getLine();
 
@@ -109,7 +108,7 @@ class Readline
     /**
      * @return string
      */
-    protected function getLine() : string
+    protected function getLine(): string
     {
         $info = $this->info();
 
@@ -120,7 +119,7 @@ class Readline
      * @param string|null $prompt
      * @return string
      */
-    protected function readlineRead(string $prompt = null) : string
+    protected function readlineRead(string $prompt = null): string
     {
         return readline($prompt);
     }
@@ -144,7 +143,7 @@ class Readline
     /**
      * @return array
      */
-    protected function info() : array
+    protected function info(): array
     {
         return readline_info();
     }
