@@ -71,7 +71,7 @@ class RunCommand extends Command
 
         $printer->printWelcome();
 
-        $readline = new Readline($dispatcher, $this->config['prompt']);
+        $readline = new Readline_OLD($dispatcher, $this->config['prompt']);
 
         $readline->read();
 

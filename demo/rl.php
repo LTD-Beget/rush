@@ -2,7 +2,7 @@
 
 require '../vendor/autoload.php';
 
-$readline = new \LTDBeget\Rush\RL();
+$readline = new \LTDBeget\Rush\Readline();
 
 while(true) {
 

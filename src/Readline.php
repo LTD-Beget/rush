@@ -3,149 +3,85 @@
 namespace LTDBeget\Rush;
 
 
-use LTDBeget\Rush\Events\Readline\AfterReadEvent;
-use LTDBeget\Rush\Events\Readline\BeforeReadEvent;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Hoa\Console\Cursor;
+use Hoa\Console\Input;
+use Hoa\Console\Output;
+use LTDBeget\Rush\UI\Completer;
+use LTDBeget\Rush\Utils\Console;
+use SebastianBergmann\CodeCoverage\Report\PHP;
 
 class Readline
 {
 
-    /**
-     * @var CompleteInterface
-     */
+    protected $buffer;
+    protected $input;
     protected $completer;
 
-    /**
-     * @var string
-     */
-    protected $prompt;
-
-    /**
-     * @var string
-     */
-    protected $defaultPrompt;
-
-    /**
-     * @var EventDispatcherInterface
-     */
-    protected $dispatcher;
-
-    /**
-     * Readline constructor.
-     * @param EventDispatcherInterface $dispatcher
-     * @param string $prompt
-     */
-    public function __construct(EventDispatcherInterface $dispatcher, string $prompt)
+    public function __construct()
     {
-        $this->dispatcher = $dispatcher;
-        $this->prompt = $this->defaultPrompt = $prompt;
+        $this->defineImmediatelyReading();
+        $this->input = new Input();
+        $this->output = new Output();
 
-        $this->init();
     }
 
-    /**
-     * @uses Readline::onCompletion()
-     */
-    protected function init()
+    public function read(string $prompt): string
     {
-        $this->completionFunction([$this, 'onCompletion']);
-    }
+        $isNewInput = true;
+        $this->buffer = '';
 
-    public function read()
-    {
-        do {
-            $this->dispatcher->dispatch(BeforeReadEvent::NAME, new BeforeReadEvent());
+        while (true) {
 
-            $line = trim($this->readlineRead($this->loadPrompt()));
-            $this->addHistory($line);
+            if ($isNewInput) {
+                echo $prompt;
+                $isNewInput = false;
+            }
 
-            $this->dispatcher->dispatch(AfterReadEvent::NAME, new AfterReadEvent($line));
-        } while ($line !== false && $line !== 'quit');
-    }
+            $char = $this->input->readCharacter();
 
-    /**
-     * @param CompleteInterface $completer
-     */
-    public function registerCompleter(CompleteInterface $completer)
-    {
-        $this->completer = $completer;
-    }
+            $code = ord($char);
 
-    /**
-     * @param string $current
-     * @return array
-     */
-    protected function onCompletion(string $current): array
-    {
-        $prev = $this->getPrev($current);
+            switch ($code) {
+                case Console::CODE_TAB:
+                    $complete = [
+                        'asset',
+                        'cache',
+                        'fixture',
+                        'message',
+                        'migrate',
+                        'serve',
+                        'user',
+                        'network',
+                        'backup',
+                        'customer'
+                    ];
+                    $completer = new Completer($complete, 4);
+                    $completer->prev();
+                    $completer->prev();
+//                    $completer->next();
+//                    $completer->next();
+//                    $completer->next();
+//                    $completer->next();
+                    $this->output->writeString(PHP_EOL);
+                    $this->output->writeString($completer->getOutput());
+                    break;
+                case Console::CODE_ENTER:
+                    $isNewInput = true;
+                    $this->output->writeString(PHP_EOL);
+                    break;
+                default:
+                    $this->buffer .= $char;
+                    $this->output->writeString($char);
+            }
 
-        return $this->completer->complete($prev, $current);
-    }
-
-    /**
-     * @return string
-     */
-    protected function loadPrompt(): string
-    {
-        return exec(sprintf('echo "%s"', "rush> "));
-    }
-
-    /**
-     * @param string $input
-     * @return string
-     */
-    protected function getPrev(string $input): string
-    {
-        $line = $this->getLine();
-
-        if ($input !== '') {
-            $line = substr($line, 0, -(strlen($input) + 1));
         }
-
-        return trim($line);
+        return $this->buffer;
     }
 
-    /**
-     * @return string
-     */
-    protected function getLine(): string
+    protected function defineImmediatelyReading()
     {
-        $info = $this->info();
-
-        return substr($info['line_buffer'], 0, $info['end']);
-    }
-
-    /**
-     * @param string|null $prompt
-     * @return string
-     */
-    protected function readlineRead(string $prompt = null): string
-    {
-        return readline($prompt);
-    }
-
-    /**
-     * @param $callable
-     */
-    protected function completionFunction($callable)
-    {
-        readline_completion_function($callable);
-    }
-
-    /**
-     * @param string $line
-     */
-    protected function addHistory(string $line)
-    {
-        readline_add_history($line);
-    }
-
-    /**
-     * @return array
-     */
-    protected function info(): array
-    {
-        return readline_info();
+        readline_callback_handler_install('', function () {
+        });
     }
 
 }

@@ -3,7 +3,7 @@
 namespace LTDBeget\Rush\Tests;
 
 
-use LTDBeget\Rush\Readline;
+use LTDBeget\Rush\Readline_OLD;
 
 class ReadlineTest extends \PHPUnit_Framework_TestCase
 {
@@ -15,13 +15,13 @@ class ReadlineTest extends \PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
-        $this->mock = $this->getMockBuilder(Readline::class)->disableOriginalConstructor();
+        $this->mock = $this->getMockBuilder(Readline_OLD::class)->disableOriginalConstructor();
     }
 
     /**
      * @dataProvider getPrevProvider
-     * @uses Readline::getLine()
-     * @uses Readline::getPrev()
+     * @uses Readline_OLD::getLine()
+     * @uses Readline_OLD::getPrev()
      */
     public function testGetPrev($line, $input, $expected)
     {
@@ -34,15 +34,15 @@ class ReadlineTest extends \PHPUnit_Framework_TestCase
             ->method('getLine')
             ->willReturn($line);
 
-        $getPrev = new \ReflectionMethod(Readline::class, 'getPrev');
+        $getPrev = new \ReflectionMethod(Readline_OLD::class, 'getPrev');
         $getPrev->setAccessible(true);
 
         $this->assertEquals($expected, $getPrev->invoke($mock, $input));
     }
 
     /**
-     * @uses Readline::info()
-     * @uses Readline::getLine()
+     * @uses Readline_OLD::info()
+     * @uses Readline_OLD::getLine()
      */
     public function testGetLine()
     {
@@ -61,7 +61,7 @@ class ReadlineTest extends \PHPUnit_Framework_TestCase
             ->method('info')
             ->willReturn($info);
 
-        $getLine = new \ReflectionMethod(Readline::class, 'getLine');
+        $getLine = new \ReflectionMethod(Readline_OLD::class, 'getLine');
         $getLine->setAccessible(true);
 
         $this->assertEquals($line, $getLine->invoke($mock));
