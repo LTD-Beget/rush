@@ -6,9 +6,10 @@ namespace LTDBeget\Rush\Utils;
 class Console
 {
 
-    const CODE_BS = 8;
+    const CODE_SP = 32;
     const CODE_TAB = 9;
     const CODE_ENTER = 13;
+    const CODE_DELETE = 127;
 
     const SGR_BOLD = 1;
     const SGR_ADDITIONAL_BG = 48;
