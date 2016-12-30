@@ -8,7 +8,9 @@ class Console
 
     const CODE_SP = 32;
     const CODE_TAB = 9;
+    const CODE_LF = 10;
     const CODE_ENTER = 13;
+    const CODE_ESC = 27;
     const CODE_DELETE = 127;
 
     const SGR_BOLD = 1;
