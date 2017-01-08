@@ -36,11 +36,12 @@ class Completer implements CompleteInterface
 
 
     /**
-     * @param string $prev
-     * @param string $current
+     * @param InputInfo|InputInfoInterface $info
      * @return array
+     * @internal param string $prev
+     * @internal param string $current
      */
-    public function complete(string $prev, string $current): array
+    public function complete(InputInfoInterface $info): array
     {
         $input = $this->buildFullInput($prev);
 

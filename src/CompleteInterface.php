@@ -7,10 +7,9 @@ interface CompleteInterface
 {
 
     /**
-     * @param string $prev
-     * @param string $current
+     * @param InputInfoInterface $info
      * @return array
      */
-    public function complete(string $prev, string $current) : array;
+    public function complete(InputInfoInterface $info) : array;
 
 }

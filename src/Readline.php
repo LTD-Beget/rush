@@ -13,106 +13,190 @@ use SebastianBergmann\CodeCoverage\Report\PHP;
 class Readline
 {
 
+    /**
+     * @var CompleteInterface
+     */
+    protected $completer;
+
+    /**
+     * @var InputBuffer
+     */
     protected $buffer;
     protected $input;
-    protected $completer;
     protected $x;
     protected $window;
 
     protected $keymap;
     protected $isNewInput;
 
-    protected $dict = [
-        'adverse',
-        'adventure',
-        'aura',
-        'application',
-        'apple',
-        'cache',
-        'fixture',
-        'message',
-        'migrate',
-        'serve',
-        'user',
-        'network',
-        'backup',
-        'customer'
-    ];
-
     public function __construct()
     {
+        $this->buffer = new InputBuffer();
         $this->input = new Input();
         $this->output = new Output();
-        $this->window = new Window($this->output, $this->dict, 4);
-        $this->bindKeyByCode(127, 'bindDEL');
-        $this->bindKeyByCode(10, 'bindLF');
-    }
+        $this->window = new Window($this->output, 4);
 
-
-    /**
-     * @param int $key ASCII code
-     * @param string $handler Function name
-     */
-    public function bindKeyByCode(int $key, string $handler)
-    {
-        $this->keymap[$key] = [$this, $handler];
+        $this->initBinds();
     }
 
     public function read(string $prompt): string
     {
         $this->isNewInput = true;
-        $this->clearBuffer();
+        $this->buffer->clear();
+
+//        $this->window->loadContent($this->getComplete());
+        $this->resetWindow();
 
         while (true) {
 
-            if ($this->isNewInput) {
-                $this->output->writeString($prompt);
-                $this->isNewInput = false;
-                $this->x = $this->getX();
+            $this->resolvePrompt($prompt);
+
+            $this->window->show($this->x);
+            $char = $this->input->read(1);
+            $this->window->hide();
+
+//            echo "CHar :" . $char . PHP_EOL;
+//            echo "CHar codde:" . ord($char) . PHP_EOL;
+//            continue;
+//
+            //service chars processing
+            if (isset($this->keymap[$char])) {
+                call_user_func($this->keymap[$char], $this);
+                continue;
             }
 
-            $char = $this->input->read(3);
-            $this->window->remove();
             $code = ord($char);
 
+            //service non printable processing
             if (isset($this->keymap[$code])) {
                 call_user_func($this->keymap[$code], $this);
                 continue;
-            } else {
-                $this->buffer .= $char;
-                $this->output->writeString($char);
-                $this->x++;
-                $this->window->prev();
-                $this->window->render($this->x);
             }
 
+            //char processing
+            $this->buffer->add($char);
+            $this->output->writeString($char);
+            $this->x++;
+            $this->resetWindow();
+//            $this->window->resetScrolling();
+//            $this->window->loadContent($this->getComplete());
         }
-        return $this->buffer;
+
+        return $this->buffer->getValue();
     }
 
-    protected function bindDEL(Readline $self)
+    public function setCompleter(CompleteInterface $completer)
     {
-        $self->buffer = substr($self->buffer, 0, -1);
-        Cursor::move("left");
-        Cursor::clear("right");
-        $self->x--;
+        $this->completer = $completer;
+    }
+
+    /**
+     * @param int|string $value ASCII code| String value
+     * @param string $handler Function name
+     */
+    public function bindKey($value, string $handler)
+    {
+        $this->keymap[$value] = [$this, $handler];
+    }
+
+    protected function initBinds()
+    {
+        /** @uses Readline::bindBackspace() */
+        $this->bindKey(127, 'bindBackspace');
+
+        /** @uses Readline::bindLF() */
+        $this->bindKey(10, 'bindLF');
+
+        /** @uses Readline::bindArrowUp() */
+        $this->bindKey("\033[A", 'bindArrowUp');
+
+        /** @uses Readline::bindArrowRight() */
+        $this->bindKey("\033[C", 'bindArrowRight');
+
+        /** @uses Readline::bindArrowDown() */
+        $this->bindKey("\033[B", 'bindArrowDown');
+
+        /** @uses Readline::bindArrowLeft() */
+        $this->bindKey("\033[D", 'bindArrowLeft');
+
+    }
+
+    protected function bindBackspace(Readline $self)
+    {
+        if ($this->buffer->removeChar()) {
+            Cursor::move("left");
+            Cursor::clear("right");
+            $self->x--;
+        }
+
+        $this->resetWindow();
+//        $this->window->resetScrolling();
     }
 
     protected function bindLF(Readline $self)
     {
-        $self->isNewInput = true;
-        $self->output->writeString(PHP_EOL);
-        $self->clearBuffer();
+        if ($self->window->isActive()) {
+            $value = $self->window->getValue();
+            $current = $this->buffer->getInputCurrent();
+//            $offset = ($current !== InputBuffer::EMPTY) ? strlen($current) : 0;
+//            $this->x = $this->x + $offset;
+//            $self->output->writeString(substr($value, $offset) . ' ');
+        } else {
+            $self->isNewInput = true;
+            $self->output->writeString(PHP_EOL);
+            $self->buffer->clear();
+        }
     }
 
-    protected function clearBuffer()
+
+
+    protected function bindArrowUp(Readline $self)
     {
-        $this->buffer = '';
+        $self->window->scrollUp();
     }
 
-    protected function getX()
+    protected function bindArrowRight(Readline $self)
     {
-        return Cursor::getPosition()['x'];
+        Cursor::move("right");
+    }
+
+    //TODO для скрола добавить чеки что окно что то покащывпет
+    protected function bindArrowDown(Readline $self)
+    {
+        $self->window->scrollDown();
+    }
+
+    protected function bindArrowLeft(Readline $self)
+    {
+        Cursor::move("left");
+    }
+
+    protected function resolvePrompt(string $prompt)
+    {
+        if ($this->isNewInput) {
+            $this->output->writeAll($prompt);
+            $this->isNewInput = false;
+            $this->defineX();
+        }
+    }
+
+    protected function resetWindow()
+    {
+        $this->window->resetScrolling();
+        $this->window->loadContent($this->getComplete());
+    }
+
+    /**
+     * @return array
+     */
+    protected function getComplete(): array
+    {
+        return $this->completer->complete(new InputInfo($this->buffer->getValue()));
+    }
+
+    protected function defineX()
+    {
+        $this->x = Cursor::getPosition()['x'];
     }
 
 }

@@ -8,43 +8,81 @@ use Hoa\Console\Output;
 use LTDBeget\Rush\Utils\Console;
 use LTDBeget\Rush\Utils\Str;
 
+/**
+ * Class Window
+ * @package LTDBeget\Rush\UI
+ * TODO проверить использование pos в контексте того что он может быть нул
+ * TODO синхронизировать x после комплита
+ *
+ */
 class Window
 {
-
-    protected $dict;
-    protected $height;
-    protected $posMax;
-    protected $ratePerLine;
-    protected $pos = self::POS_START;
-    protected $offset = 0;
-    protected $reverse = false;
 
     /**
      * @var Output
      */
     protected $output;
 
+    /**
+     * @var int
+     */
+    protected $height;
+
+    /**
+     * @var array
+     */
+    protected $content;
+
+    /**
+     * @var int
+     */
+    protected $pos;
+
+    /**
+     * @var int
+     */
+    protected $posMax;
+
+    /**
+     * @var int
+     */
+    protected $offset;
+
+    /**
+     * @var bool
+     */
+    protected $reverse;
+
+    /**
+     * @var int
+     */
+    protected $ratePerLine;
+
+    /**
+     * @var int
+     */
+    protected $ratePerItem;
+
+
+
     const POS_START = 0;
 
     /**
      * Completer constructor.
-     * @param array $dict
+     * @param Output $output
      * @param int $height
      */
-    function __construct(Output $output, array $dict, int $height)
+    function __construct(Output $output, int $height)
     {
         $this->output = $output;
-        $this->dict = $dict;
         $this->height = $height;
-        $count = count($dict);
-        $this->posMax = $count - 1;
-        $this->ratePerItem = intdiv(100, $count);
-        $this->ratePerLine = intdiv(100, $this->height);
+
+        $this->resetScrolling();
     }
 
-    public function prev()
+    public function scrollUp()
     {
-        if($this->pos === self::POS_START) {
+        if (!$this->isActive() || $this->pos === self::POS_START) {
             $this->pos = $this->posMax;
             $this->reverse = true;
         } else {
@@ -52,9 +90,11 @@ class Window
         }
     }
 
-    public function next()
+    public function scrollDown()
     {
-        if($this->pos === $this->posMax) {
+        if (!$this->isActive()) {
+            $this->pos = self::POS_START;
+        } else if ($this->pos === $this->posMax) {
             $this->pos = self::POS_START;
             $this->reverse = false;
         } else {
@@ -62,28 +102,64 @@ class Window
         }
     }
 
-    public function render(int $x)
+    public function loadContent(array $content)
     {
+        $this->content = $content;
+
+        if(empty($this->content)) {
+            return;
+        }
+
+        $count = count($content);
+        $this->posMax = $count - 1;
+        $this->ratePerItem = intdiv(100, $count);
+        $this->ratePerLine = intdiv(100, $this->height);
+    }
+
+    public function isActive()
+    {
+        return $this->pos !== null;
+    }
+
+    public function getValue()
+    {
+        return $this->content[$this->getPosActive()];
+    }
+
+    public function show(int $x)
+    {
+        if(empty($this->content)) {
+            return;
+        }
+
         Cursor::save();
+
         Cursor::move('down');
         Cursor::move('LEFT');
-
         Cursor::move('right', $x);
 
         $output = $this->getOutput($x);
         $this->output->writeString($output);
+
         Cursor::restore();
     }
 
-    public function remove()
+    public function hide()
     {
         Cursor::clear("down");
+    }
+
+    public function resetScrolling()
+    {
+        $this->pos = null;
+        $this->offset = 0;
+        $this->reverse = false;
     }
 
     /**
      * @return string
      */
-    public function getOutput(int $x) : string
+    protected function getOutput(int $x): string
     {
         $this->defineOffset();
         $dict = $this->getSlice();
@@ -91,22 +167,24 @@ class Window
         $width = Str::getMaxLength($dict);
         $output = '';
 
-        $activeFound = false;
+        $activeFound = !($this->isActive());
         $scrollDrawn = false;
-        $posActive = $this->pos - $this->offset;
-        $posScroll = $this->getScrollPos();
+        $posActive = $this->getPosActive();
+        $posScroll = $this->getPosScroll();
 
         foreach ($dict as $k => $word) {
 
             $fgcolor = 37;
-            if(!$activeFound && $k === $posActive) {
+
+            if (!$activeFound && $k === $posActive) {
                 $fgcolor = 30;
                 $activeFound = true;
             }
 
             $output .= Console::ansiFormat(' ' . Str::normalize($word, $width) . ' ', [$fgcolor, 46, 1]);
 
-            if(!$scrollDrawn && $k === $posScroll) {
+
+            if (!$scrollDrawn && $k === $posScroll) {
                 $scroll = Console::ansiFormat(' ', [48, 2, 50, 50, 50]);
                 $scrollDrawn = true;
             } else {
@@ -121,9 +199,9 @@ class Window
 
     protected function defineOffset()
     {
-        if($this->reverse) {
+        if ($this->reverse) {
 
-            if($this->pos > ($this->posMax - $this->height)) {
+            if ($this->pos > ($this->posMax - $this->height)) {
                 $this->offset = ($this->posMax + 1) - $this->height;
             } else {
                 $this->offset = $this->pos;
@@ -131,7 +209,7 @@ class Window
 
         } else {
 
-            if($this->pos < $this->height) {
+            if ($this->pos < $this->height) {
                 $this->offset = 0;
             } else {
                 $this->offset = ($this->pos + 1) - $this->height;
@@ -141,23 +219,31 @@ class Window
     }
 
     /**
+     * @return int
+     */
+    protected function getPosActive(): int
+    {
+        return $this->pos - $this->offset;
+    }
+
+    /**
      * @return array
      */
-    protected function getSlice() : array
+    protected function getSlice(): array
     {
-        return array_slice($this->dict, $this->offset, $this->height);
+        return array_slice($this->content, $this->offset, $this->height);
     }
 
     /**
      * @return int
      */
-    protected function getScrollPos() : int
+    protected function getPosScroll(): int
     {
         $progress = $this->pos * $this->ratePerItem;
         $pos = 0;
 
         while (true) {
-            if($progress < (($pos + 1) * $this->ratePerLine)) {
+            if ($progress < (($pos + 1) * $this->ratePerLine)) {
                 break;
             }
 
