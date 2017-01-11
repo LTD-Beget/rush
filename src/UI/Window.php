@@ -84,10 +84,16 @@ class Window
     {
         if (!$this->isActive() || $this->pos === self::POS_START) {
             $this->pos = $this->posMax;
+            $this->offset = $this->posMax - $this->height + 1;
             $this->reverse = true;
         } else {
             $this->pos--;
+
+            if($this->pos < $this->offset) {
+                $this->offset--;
+            }
         }
+
     }
 
     public function scrollDown()
@@ -97,8 +103,13 @@ class Window
         } else if ($this->pos === $this->posMax) {
             $this->pos = self::POS_START;
             $this->reverse = false;
+            $this->offset = 0;
         } else {
             $this->pos++;
+
+            if($this->pos > ($this->offset + $this->height - 1)) {
+                $this->offset++;
+            }
         }
     }
 
@@ -161,7 +172,6 @@ class Window
      */
     protected function getOutput(int $x): string
     {
-        $this->defineOffset();
         $dict = $this->getSlice();
 
         $width = Str::getMaxLength($dict);
@@ -195,27 +205,6 @@ class Window
         }
 
         return $output;
-    }
-
-    protected function defineOffset()
-    {
-        if ($this->reverse) {
-
-            if ($this->pos > ($this->posMax - $this->height)) {
-                $this->offset = ($this->posMax + 1) - $this->height;
-            } else {
-                $this->offset = $this->pos;
-            }
-
-        } else {
-
-            if ($this->pos < $this->height) {
-                $this->offset = 0;
-            } else {
-                $this->offset = ($this->pos + 1) - $this->height;
-            }
-
-        }
     }
 
     /**
