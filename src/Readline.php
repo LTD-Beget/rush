@@ -3,12 +3,10 @@
 namespace LTDBeget\Rush;
 
 
-use Hoa\Console\Cursor;
 use Hoa\Console\Input;
 use Hoa\Console\Output;
 use LTDBeget\Rush\UI\Window;
-use LTDBeget\Rush\Utils\Console;
-use SebastianBergmann\CodeCoverage\Report\PHP;
+
 
 class Readline
 {
@@ -22,12 +20,27 @@ class Readline
      * @var InputBuffer
      */
     protected $buffer;
+
+    /**
+     * @var Input
+     */
     protected $input;
-    protected $x;
+
+    /**
+     * @var Output
+     */
+    protected $output;
+
+    /**
+     * @var Window
+     */
     protected $window;
 
+    /**
+     * @var array
+     */
     protected $keymap;
-    protected $isNewInput;
+
 
     public function __construct()
     {
@@ -41,16 +54,14 @@ class Readline
 
     public function read(string $prompt): string
     {
-        $this->isNewInput = true;
-        $this->buffer->clear();
-
         $this->resetWindow();
+
+        $this->buffer->setPrompt($prompt);
 
         while (true) {
 
-            $this->resolvePrompt($prompt);
-
-            $this->window->show($this->x + $this->buffer->getPos());
+            $this->buffer->flush($this->output);
+            $this->window->show($this->buffer->getAbsolutePos());
             $char = $this->input->read(3);
             $this->window->hide();
 
@@ -74,11 +85,10 @@ class Readline
 
             //char processing
             $this->buffer->insert($char);
-            $this->output->writeString($char);
             $this->resetWindow();
         }
 
-        return $this->buffer->getValue();
+        return $this->buffer->getCurrent();
     }
 
     public function setCompleter(CompleteInterface $completer)
@@ -119,10 +129,7 @@ class Readline
 
     protected function bindBackspace(Readline $self)
     {
-        if ($this->buffer->removeChar()) {
-            Cursor::move("left");
-            Cursor::clear("right");
-        }
+        $this->buffer->removeChar();
 
         $this->resetWindow();
     }
@@ -131,7 +138,7 @@ class Readline
     {
         if ($self->window->isActive()) {
             $value = $self->window->getValue();
-            $current = $this->buffer->getValue();
+            $current = $this->buffer->getCurrent();
 
             $info = new InputInfo($current);
             //TODO Рассмотреть что дополняем и по ситуации ставить в конце пробел и смещать курсор за скобки,
@@ -143,12 +150,16 @@ class Readline
             $offset = ($current !== InputBuffer::EMPTY) ? strlen($current) : 0;
             $complition = substr($value, $offset);
             $this->buffer->insert($complition);
-            $self->output->writeString($complition);
+
             $this->resetWindow();
         } else {
-            $self->isNewInput = true;
+            // код запуска команды
+
             $self->output->writeString(PHP_EOL);
-            $self->buffer->clear();
+            $self->output->writeString("Command executed");
+            $self->output->writeString(PHP_EOL);
+
+            $self->buffer->reset();
         }
     }
 
@@ -159,7 +170,6 @@ class Readline
 
     protected function bindArrowRight(Readline $self)
     {
-        Cursor::move("right");
         $this->buffer->next();
     }
 
@@ -171,22 +181,11 @@ class Readline
 
     protected function bindArrowLeft(Readline $self)
     {
-        Cursor::move("left");
         $this->buffer->prev();
-    }
-
-    protected function resolvePrompt(string $prompt)
-    {
-        if ($this->isNewInput) {
-            $this->output->writeAll($prompt);
-            $this->isNewInput = false;
-            $this->x = $this->getPosCursorX() - 1;
-        }
     }
 
     protected function resetWindow()
     {
-        $this->window->resetScrolling();
         $this->window->loadContent($this->getComplete());
     }
 
@@ -195,12 +194,7 @@ class Readline
      */
     protected function getComplete(): array
     {
-        return $this->completer->complete(new InputInfo($this->buffer->getValue()));
-    }
-
-    protected function getPosCursorX()
-    {
-        return Cursor::getPosition()['x'];
+        return $this->completer->complete(new InputInfo($this->buffer->getCurrent()));
     }
 
 }

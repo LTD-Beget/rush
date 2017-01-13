@@ -11,7 +11,7 @@ class InputInfo implements InputInfoInterface
     protected $args;
     protected $options;
     protected $pos;
-    protected $current;
+    protected $current = '';
 
     public function __construct(string $input)
     {

@@ -64,7 +64,6 @@ class Window
     protected $ratePerItem;
 
 
-
     const POS_START = 0;
 
     /**
@@ -89,7 +88,7 @@ class Window
         } else {
             $this->pos--;
 
-            if($this->pos < $this->offset) {
+            if ($this->pos < $this->offset) {
                 $this->offset--;
             }
         }
@@ -107,7 +106,7 @@ class Window
         } else {
             $this->pos++;
 
-            if($this->pos > ($this->offset + $this->height - 1)) {
+            if ($this->pos > ($this->offset + $this->height - 1)) {
                 $this->offset++;
             }
         }
@@ -115,9 +114,11 @@ class Window
 
     public function loadContent(array $content)
     {
+        $this->resetScrolling();
+
         $this->content = $content;
 
-        if(empty($this->content)) {
+        if (empty($this->content)) {
             return;
         }
 
@@ -137,19 +138,19 @@ class Window
         return $this->content[$this->getPosActive()];
     }
 
-    public function show(int $x)
+    public function show()
     {
-        if(empty($this->content)) {
+        if (empty($this->content)) {
             return;
         }
 
         Cursor::save();
 
         Cursor::move('down');
-        Cursor::move('LEFT');
-        Cursor::move('right', $x);
+//        Cursor::move('LEFT');
+//        Cursor::move('right', $x);
 
-        $output = $this->getOutput($x);
+        $output = $this->getOutput();
         $this->output->writeString($output);
 
         Cursor::restore();
@@ -160,8 +161,9 @@ class Window
         Cursor::clear("down");
     }
 
-    public function resetScrolling()
+    protected function resetScrolling()
     {
+        //TODO избавиться от null
         $this->pos = null;
         $this->offset = 0;
         $this->reverse = false;
@@ -170,7 +172,7 @@ class Window
     /**
      * @return string
      */
-    protected function getOutput(int $x): string
+    protected function getOutput(): string
     {
         $dict = $this->getSlice();
 
@@ -191,17 +193,20 @@ class Window
                 $activeFound = true;
             }
 
-            $output .= Console::ansiFormat(' ' . Str::normalize($word, $width) . ' ', [$fgcolor, 46, 1]);
-
+            $line = ' ' . str_pad($word, $width) . ' ';
+            $output .= Console::ansiFormat($line, [$fgcolor, 46, 1]);
 
             if (!$scrollDrawn && $k === $posScroll) {
-                $scroll = Console::ansiFormat(' ', [48, 2, 50, 50, 50]);
+                $scrollStyle = [48, 2, 50, 50, 50];
                 $scrollDrawn = true;
             } else {
-                $scroll = Console::ansiFormat(' ', [48, 2, 90, 90, 90]);
+                $scrollStyle = [48, 2, 90, 90, 90];
             }
 
-            $output .= $scroll . PHP_EOL . "\033[{$x}C";
+            $scroll = ' ';
+
+            $offset = strlen($line . $scroll);
+            $output .= Console::ansiFormat($scroll, $scrollStyle) . "\033[1B" . "\033[{$offset}D";
         }
 
         return $output;

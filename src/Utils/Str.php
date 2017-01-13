@@ -25,14 +25,4 @@ class Str
         return $max;
     }
 
-    /**
-     * @param string $str
-     * @param int $length
-     * @return string
-     */
-    public static function normalize(string $str, int $length) : string
-    {
-        return $str . str_repeat(' ', $length - mb_strlen($str));
-    }
-
 }
