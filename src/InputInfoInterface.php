@@ -10,8 +10,7 @@ interface InputInfoInterface
 
     public function getOptions(): array;
 
-//    public function getCurrent(): string;
-
     public function getPos(): int;
 
+    public function getCurrent(): string;
 }

@@ -19,18 +19,6 @@ class ColumnFormatterTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @uses ColumnFormatter::normalize()
-     */
-    public function testNormalize()
-    {
-        $method = new \ReflectionMethod(ColumnFormatter::class, 'normalize');
-        $method->setAccessible(true);
-        $actual = $method->invoke($this->obj, 'migrate', 10);
-
-        $this->assertEquals('migrate   ', $actual);
-    }
-
-    /**
      * @dataProvider calculateColumnHeightProvider
      * @uses         ColumnFormatter::calculateHeightColumn()
      *

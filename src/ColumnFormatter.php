@@ -82,7 +82,7 @@ class ColumnFormatter
         $output = PHP_EOL;
 
         foreach ($data as $i => $column) {
-            $output .= $this->normalize($column, $width);
+            $output .= str_pad($column, $width);
 
             $isRow = (($i + 1) % $sizeRow) === 0;
 
@@ -115,18 +115,6 @@ class ColumnFormatter
         }
 
         return $result;
-    }
-
-    /**
-     * @param string $str
-     * @param int $colWidth
-     * @return string
-     */
-    protected function normalize(string $str, int $colWidth) : string
-    {
-        $void = str_repeat(' ', $colWidth - mb_strlen($str));
-
-        return $str . $void;
     }
 
 }

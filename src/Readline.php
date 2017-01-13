@@ -44,15 +44,14 @@ class Readline
         $this->isNewInput = true;
         $this->buffer->clear();
 
-//        $this->window->loadContent($this->getComplete());
         $this->resetWindow();
 
         while (true) {
 
             $this->resolvePrompt($prompt);
 
-            $this->window->show($this->x);
-            $char = $this->input->read(1);
+            $this->window->show($this->x + $this->buffer->getPos());
+            $char = $this->input->read(3);
             $this->window->hide();
 
 //            echo "CHar :" . $char . PHP_EOL;
@@ -74,12 +73,9 @@ class Readline
             }
 
             //char processing
-            $this->buffer->add($char);
+            $this->buffer->insert($char);
             $this->output->writeString($char);
-            $this->x++;
             $this->resetWindow();
-//            $this->window->resetScrolling();
-//            $this->window->loadContent($this->getComplete());
         }
 
         return $this->buffer->getValue();
@@ -126,29 +122,35 @@ class Readline
         if ($this->buffer->removeChar()) {
             Cursor::move("left");
             Cursor::clear("right");
-            $self->x--;
         }
 
         $this->resetWindow();
-//        $this->window->resetScrolling();
     }
 
     protected function bindLF(Readline $self)
     {
         if ($self->window->isActive()) {
             $value = $self->window->getValue();
-            $current = $this->buffer->getInputCurrent();
-//            $offset = ($current !== InputBuffer::EMPTY) ? strlen($current) : 0;
-//            $this->x = $this->x + $offset;
-//            $self->output->writeString(substr($value, $offset) . ' ');
+            $current = $this->buffer->getValue();
+
+            $info = new InputInfo($current);
+            //TODO Рассмотреть что дополняем и по ситуации ставить в конце пробел и смещать курсор за скобки,
+            // если это например значение опции
+            //TODO всего три кейса: аргумент, опция, значение опции
+            // пока только аргумент
+            // в буффер должна быть вставка с учетом внутренней позиции
+            $current = $info->getCurrent();
+            $offset = ($current !== InputBuffer::EMPTY) ? strlen($current) : 0;
+            $complition = substr($value, $offset);
+            $this->buffer->insert($complition);
+            $self->output->writeString($complition);
+            $this->resetWindow();
         } else {
             $self->isNewInput = true;
             $self->output->writeString(PHP_EOL);
             $self->buffer->clear();
         }
     }
-
-
 
     protected function bindArrowUp(Readline $self)
     {
@@ -158,6 +160,7 @@ class Readline
     protected function bindArrowRight(Readline $self)
     {
         Cursor::move("right");
+        $this->buffer->next();
     }
 
     //TODO для скрола добавить чеки что окно что то покащывпет
@@ -169,6 +172,7 @@ class Readline
     protected function bindArrowLeft(Readline $self)
     {
         Cursor::move("left");
+        $this->buffer->prev();
     }
 
     protected function resolvePrompt(string $prompt)
@@ -176,7 +180,7 @@ class Readline
         if ($this->isNewInput) {
             $this->output->writeAll($prompt);
             $this->isNewInput = false;
-            $this->defineX();
+            $this->x = $this->getPosCursorX() - 1;
         }
     }
 
@@ -194,9 +198,9 @@ class Readline
         return $this->completer->complete(new InputInfo($this->buffer->getValue()));
     }
 
-    protected function defineX()
+    protected function getPosCursorX()
     {
-        $this->x = Cursor::getPosition()['x'];
+        return Cursor::getPosition()['x'];
     }
 
 }

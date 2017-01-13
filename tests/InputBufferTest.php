@@ -17,46 +17,50 @@ class InputBufferTest extends \PHPUnit_Framework_TestCase
     protected function setUp()
     {
         $this->obj = new InputBuffer();
-    }
 
-//    public function testGetInputCurrent()
-//    {
-//
-//    }
+    }
 
     /**
-     * @dataProvider countTokensProvider
-     * @uses InputBuffer::countTokens()
+     * @uses InputBuffer::$buffer
+     * @uses InputBuffer::$pos
+     * @uses InputBuffer::insert()
+     * @dataProvider insertProvider
      *
-     * @param $value
-     * @param $expected
+     * @param string $value
+     * @param int $pos
+     * @param string $insert
+     * @param string $expectedValue
+     * @param string $expectedPos
      */
-    public function testCountTokens($value, $expected)
+    public function testInsert(string $value, int $pos, string $insert, string $expectedValue, string $expectedPos)
     {
-        $method = new \ReflectionMethod(InputBuffer::class, 'countTokens');
-        $method->setAccessible(true);
-        $actual = $method->invoke($this->obj, $value);
+        $class = new \ReflectionClass(InputBuffer::class);
 
-        $this->assertEquals($actual, $expected);
+        $propBuffer = $class->getProperty('buffer');
+        $propBuffer->setAccessible(true);
+        $propBuffer->setValue($this->obj, $value);
+
+        $propPos = $class->getProperty('pos');
+        $propPos->setAccessible(true);
+        $propPos->setValue($this->obj, $pos);
+
+        $method = $class->getMethod('insert');
+        $method->invoke($this->obj, $insert);
+
+        $this->assertEquals($expectedValue, $propBuffer->getValue($this->obj));
+        $this->assertEquals($expectedPos, $propPos->getValue($this->obj));
     }
 
-    public function getInputCurrentProvider()
+
+    public function insertProvider()
     {
         return [
-            'single' => ['command', 'command'],
-            'multi' => ['command arg', 'arg'],
-            'with space' => ['command arg  ', ''],
-            'with quoted' => ['command "some va', 3]
+            'insert to empty' => ['', 0, 'test', 'test', 4],
+            'insert to end' => ['test', 4, 'done', 'testdone', 8],
+            'insert to middle' => ['testdone', 4, 'middle', 'testmiddledone', 10],
+            'insert to begin' => ['testmiddledone', 0, 'prefix', 'prefixtestmiddledone', 6],
         ];
     }
 
-    public function countTokensProvider()
-    {
-        return [
-            'single' => ['command', 1],
-            'multi' => ['command arg', 2],
-            'with quoted and space' => ['command "some arg"   --name="some name" ', 3]
-        ];
-    }
 
 }
