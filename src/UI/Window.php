@@ -116,7 +116,7 @@ class Window
     {
         $this->resetScrolling();
 
-        $this->content = $content;
+        $this->content = array_values($content);
 
         if (empty($this->content)) {
             return;
@@ -145,10 +145,7 @@ class Window
         }
 
         Cursor::save();
-
         Cursor::move('down');
-//        Cursor::move('LEFT');
-//        Cursor::move('right', $x);
 
         $output = $this->getOutput();
         $this->output->writeString($output);

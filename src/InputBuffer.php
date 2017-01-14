@@ -30,14 +30,6 @@ class InputBuffer
      * @var string
      */
     protected $prompt = '';
-
-    public function flush(Output $output)
-    {
-        Cursor::clear('line');
-        $output->writeString($this->prompt . $this->buffer);
-        Cursor::move("LEFT");
-        Cursor::move('right', $this->getAbsolutePos());
-    }
     
     /**
      * @param string $prompt
@@ -62,12 +54,12 @@ class InputBuffer
         return substr($this->buffer, 0, $this->pos);
     }
 
-    public function getInfo()
+    /**
+     * @return string
+     */
+    public function getValue(): string
     {
-        return [
-            'buffer' => $this->prompt . $this->buffer,
-            'pos' => $this->getAbsolutePos()
-        ];
+        return $this->prompt . $this->buffer;
     }
 
     public function insert(string $value)

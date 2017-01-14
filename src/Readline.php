@@ -3,6 +3,7 @@
 namespace LTDBeget\Rush;
 
 
+use Hoa\Console\Cursor;
 use Hoa\Console\Input;
 use Hoa\Console\Output;
 use LTDBeget\Rush\UI\Window;
@@ -60,8 +61,8 @@ class Readline
 
         while (true) {
 
-            $this->buffer->flush($this->output);
-            $this->window->show($this->buffer->getAbsolutePos());
+            $this->printBuffer();
+            $this->window->show();
             $char = $this->input->read(3);
             $this->window->hide();
 
@@ -107,22 +108,22 @@ class Readline
 
     protected function initBinds()
     {
-        /** @uses Readline::bindBackspace() */
+        /** @uses \LTDBeget\Rush\Readline::bindBackspace() */
         $this->bindKey(127, 'bindBackspace');
 
-        /** @uses Readline::bindLF() */
+        /** @uses \LTDBeget\Rush\Readline::bindLF() */
         $this->bindKey(10, 'bindLF');
 
-        /** @uses Readline::bindArrowUp() */
+        /** @uses \LTDBeget\Rush\Readline::bindArrowUp() */
         $this->bindKey("\033[A", 'bindArrowUp');
 
-        /** @uses Readline::bindArrowRight() */
+        /** @uses \LTDBeget\Rush\Readline::bindArrowRight() */
         $this->bindKey("\033[C", 'bindArrowRight');
 
-        /** @uses Readline::bindArrowDown() */
+        /** @uses \LTDBeget\Rush\Readline::bindArrowDown() */
         $this->bindKey("\033[B", 'bindArrowDown');
 
-        /** @uses Readline::bindArrowLeft() */
+        /** @uses \LTDBeget\Rush\Readline::bindArrowLeft() */
         $this->bindKey("\033[D", 'bindArrowLeft');
 
     }
@@ -187,6 +188,14 @@ class Readline
     protected function resetWindow()
     {
         $this->window->loadContent($this->getComplete());
+    }
+
+    protected function printBuffer()
+    {
+        Cursor::clear('line');
+        $this->output->writeString($this->buffer->getValue());
+        Cursor::move("LEFT");
+        Cursor::move('right', $this->buffer->getAbsolutePos());
     }
 
     /**
