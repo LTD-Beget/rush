@@ -21,7 +21,7 @@ class InputBufferTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @uses InputBuffer::$buffer
+     * @uses InputBuffer::$input
      * @uses InputBuffer::$pos
      * @uses InputBuffer::insert()
      * @dataProvider insertProvider

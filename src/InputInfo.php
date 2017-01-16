@@ -11,7 +11,7 @@ class InputInfo implements InputInfoInterface
     protected $args;
     protected $options;
     protected $pos;
-    protected $current = '';
+    protected $current;
 
     public function __construct(string $input)
     {
@@ -26,30 +26,29 @@ class InputInfo implements InputInfoInterface
         $this->args = $parser->getInputs();
         $this->options = $parser->getSwitches();
 
-        $count = count($this->args) + count($this->options);
+        $nArgs = count($this->args);
+        $count = $nArgs + count($this->options);
+        $this->pos = $count ? $count - 1 : 0;
 
-        if ($count) {
-            $this->pos = $count - 1;
-
-            if ($this->hasNewEmptyInput($input)) {
-                $this->pos++;
-            }
-
-        } else {
-            $this->pos = 0;
-        }
-
-        if (empty($this->options)) {
-            $c = count($this->args);
-
-            if ($c) {
-                $this->current = $this->args[$c - 1];
-            }
-
-        } else {
+        if(!empty($this->options)) {
             $value = end($this->options);
             $key = key($this->options);
             $this->current = [$key => $value];
+
+            return;
+        }
+
+        if(!$nArgs) {
+            $this->current = '';
+
+            return;
+        }
+
+        if ($this->hasNewEmptyInput($input)) {
+            $this->pos++;
+            $this->current = '';
+        } else {
+            $this->current = $this->args[$this->pos];
         }
 
     }

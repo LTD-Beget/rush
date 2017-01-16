@@ -7,6 +7,7 @@ use Hoa\Console\Cursor;
 use Hoa\Console\Input;
 use Hoa\Console\Output;
 use LTDBeget\Rush\UI\Window;
+use phpDocumentor\Reflection\Types\Callable_;
 
 
 class Readline
@@ -40,7 +41,12 @@ class Readline
     /**
      * @var array
      */
-    protected $keymap;
+    protected $keyHandlers;
+
+    /**
+     * @var array
+     */
+    protected $completeCallbacks;
 
 
     public function __construct()
@@ -50,13 +56,13 @@ class Readline
         $this->output = new Output();
         $this->window = new Window($this->output, 4);
 
-        $this->initBinds();
+        $this->initKeyHandlers();
+        $this->initCompleteCallbacks();
     }
 
     public function read(string $prompt): string
     {
         $this->resetWindow();
-
         $this->buffer->setPrompt($prompt);
 
         while (true) {
@@ -70,17 +76,7 @@ class Readline
 //            echo "CHar codde:" . ord($char) . PHP_EOL;
 //            continue;
 //
-            //service chars processing
-            if (isset($this->keymap[$char])) {
-                call_user_func($this->keymap[$char], $this);
-                continue;
-            }
-
-            $code = ord($char);
-
-            //service non printable processing
-            if (isset($this->keymap[$code])) {
-                call_user_func($this->keymap[$code], $this);
+            if ($this->tryResolveAsServiceCommand($char)) {
                 continue;
             }
 
@@ -89,7 +85,6 @@ class Readline
             $this->resetWindow();
         }
 
-        return $this->buffer->getCurrent();
     }
 
     public function setCompleter(CompleteInterface $completer)
@@ -97,48 +92,80 @@ class Readline
         $this->completer = $completer;
     }
 
+    public function registerKeyHandler($value, Callable $handler)
+    {
+        $this->keyHandlers[$value] = $handler;
+    }
+
+    public function registerCompleteCallback(string $type, Callable $callback)
+    {
+        $this->completeCallbacks[$type] = $callback;
+    }
+
     /**
      * @param int|string $value ASCII code| String value
      * @param string $handler Function name
      */
-    public function bindKey($value, string $handler)
+    protected function registerCoreKeyHandler($value, string $handler)
     {
-        $this->keymap[$value] = [$this, $handler];
+        $this->registerKeyHandler($value, [$this, $handler]);
     }
 
-    protected function initBinds()
+    protected function initKeyHandlers()
     {
-        /** @uses \LTDBeget\Rush\Readline::bindBackspace() */
-        $this->bindKey(127, 'bindBackspace');
+        /** @uses \LTDBeget\Rush\Readline::handlerTab() */
+        $this->registerCoreKeyHandler(9, 'handlerTab');
 
-        /** @uses \LTDBeget\Rush\Readline::bindLF() */
-        $this->bindKey(10, 'bindLF');
+        /** @uses \LTDBeget\Rush\Readline::handlerBackspace() */
+        $this->registerCoreKeyHandler(127, 'handlerBackspace');
+
+        /** @uses \LTDBeget\Rush\Readline::handlerLF() */
+        $this->registerCoreKeyHandler(10, 'handlerLF');
 
         /** @uses \LTDBeget\Rush\Readline::bindArrowUp() */
-        $this->bindKey("\033[A", 'bindArrowUp');
+        $this->registerCoreKeyHandler("\033[A", 'handlerArrowUp');
 
-        /** @uses \LTDBeget\Rush\Readline::bindArrowRight() */
-        $this->bindKey("\033[C", 'bindArrowRight');
+        /** @uses \LTDBeget\Rush\Readline::handlerArrowRight() */
+        $this->registerCoreKeyHandler("\033[C", 'handlerArrowRight');
 
-        /** @uses \LTDBeget\Rush\Readline::bindArrowDown() */
-        $this->bindKey("\033[B", 'bindArrowDown');
+        /** @uses \LTDBeget\Rush\Readline::handlerArrowDown() */
+        $this->registerCoreKeyHandler("\033[B", 'handlerArrowDown');
 
-        /** @uses \LTDBeget\Rush\Readline::bindArrowLeft() */
-        $this->bindKey("\033[D", 'bindArrowLeft');
+        /** @uses \LTDBeget\Rush\Readline::handlerArrowLeft() */
+        $this->registerCoreKeyHandler("\033[D", 'handlerArrowLeft');
+
+        /** @uses \LTDBeget\Rush\Readline::handlerQuotes() */
+        $this->registerCoreKeyHandler("\"", "handlerQuotes");
 
     }
 
-    protected function bindBackspace(Readline $self)
+    protected function initCompleteCallbacks()
     {
-        $this->buffer->removeChar();
-
-        $this->resetWindow();
+        /** @uses \LTDBeget\Rush\Readline::callbackArg() */
+        $this->registerCompleteCallback(CompleteCallbackInterface::TYPE_ARG, [$this, 'callbackArg']);
     }
 
-    protected function bindLF(Readline $self)
+    protected function handlerQuotes(Readline $self)
+    {
+        $self->buffer->insert("\"\"");
+        $self->buffer->prev();
+    }
+
+    protected function handlerBackspace(Readline $self)
+    {
+        $self->buffer->removeChar();
+        $self->resetWindow();
+    }
+
+    protected function handlerTab(Readline $self)
+    {
+        //TODO minComplete
+    }
+
+    protected function handlerLF(Readline $self)
     {
         if ($self->window->isActive()) {
-            $this->processComplete();
+            $self->processComplete();
 
         } else {
             // код запуска команды
@@ -151,25 +178,35 @@ class Readline
         }
     }
 
-    protected function bindArrowUp(Readline $self)
+    protected function handlerArrowUp(Readline $self)
     {
         $self->window->scrollUp();
     }
 
-    protected function bindArrowRight(Readline $self)
+    protected function handlerArrowRight(Readline $self)
     {
-        $this->buffer->next();
+        $self->buffer->next();
     }
 
     //TODO для скрола добавить чеки что окно что то покащывпет
-    protected function bindArrowDown(Readline $self)
+    protected function handlerArrowDown(Readline $self)
     {
         $self->window->scrollDown();
     }
 
-    protected function bindArrowLeft(Readline $self)
+    protected function handlerArrowLeft(Readline $self)
     {
         $self->buffer->prev();
+    }
+
+    protected function callbackArg(Readline $self)
+    {
+        if ($self->buffer->isEndOfInput()) {
+            $self->buffer->insert(' ');
+        } else {
+            $self->buffer->next();
+        }
+
     }
 
     protected function resetWindow()
@@ -177,12 +214,34 @@ class Readline
         $this->window->loadContent($this->getComplete());
     }
 
+    /**
+     * @param string $char
+     * @return bool
+     */
+    protected function tryResolveAsServiceCommand(string $char): bool
+    {
+        //service chars processing
+        if (isset($this->keyHandlers[$char])) {
+            call_user_func($this->keyHandlers[$char], $this);
+            return true;
+        }
+
+        $code = ord($char);
+
+        //service non printable processing
+        if (isset($this->keyHandlers[$code])) {
+            call_user_func($this->keyHandlers[$code], $this);
+            return true;
+        }
+
+        return false;
+    }
+
     protected function processComplete()
     {
         $value = $this->window->getValue();
-        $current = $this->buffer->getCurrent();
 
-        $info = new InputInfo($current);
+        $info = $this->buffer->getInputInfo();
         //TODO Рассмотреть что дополняем и по ситуации ставить в конце пробел и смещать курсор за скобки,
         // если это например значение опции
         //TODO всего три кейса: аргумент, опция, значение опции
@@ -190,8 +249,13 @@ class Readline
         // в буффер должна быть вставка с учетом внутренней позиции
         $current = $info->getCurrent();
         $offset = ($current !== InputBuffer::EMPTY) ? strlen($current) : 0;
+        $type = CompleteCallbackInterface::TYPE_ARG;
         $complition = substr($value, $offset);
         $this->buffer->insert($complition);
+
+        if (isset($this->completeCallbacks[$type])) {
+            call_user_func($this->completeCallbacks[$type], $this);
+        }
 
         $this->resetWindow();
     }
@@ -199,7 +263,7 @@ class Readline
     protected function printBuffer()
     {
         Cursor::clear('line');
-        $this->output->writeString($this->buffer->getValue());
+        $this->output->writeString($this->buffer->getPrompt() . $this->buffer->getInput());
         Cursor::move("LEFT");
         Cursor::move('right', $this->buffer->getAbsolutePos());
     }
@@ -209,7 +273,7 @@ class Readline
      */
     protected function getComplete(): array
     {
-        return $this->completer->complete(new InputInfo($this->buffer->getCurrent()));
+        return $this->completer->complete($this->buffer->getInputInfo());
     }
 
 }

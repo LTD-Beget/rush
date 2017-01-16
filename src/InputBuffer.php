@@ -2,10 +2,6 @@
 
 namespace LTDBeget\Rush;
 
-
-use Hoa\Console\Cursor;
-use Hoa\Console\Output;
-
 class InputBuffer
 {
 
@@ -24,7 +20,7 @@ class InputBuffer
     /**
      * @var string
      */
-    protected $buffer = self::EMPTY;
+    protected $input = self::EMPTY;
 
     /**
      * @var string
@@ -42,8 +38,40 @@ class InputBuffer
 
     public function reset()
     {
-        $this->buffer = self::EMPTY;
+        $this->input = self::EMPTY;
         $this->pos = 0;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isEndOfInput(): bool
+    {
+        return $this->pos === strlen($this->getInput());
+    }
+
+    /**
+     * @return InputInfo
+     */
+    public function getInputInfo(): InputInfo
+    {
+        return new InputInfo($this->getCurrent());
+    }
+
+    /**
+     * @return string
+     */
+    public function getPrompt(): string
+    {
+        return $this->prompt;
+    }
+
+    /**
+     * @return string
+     */
+    public function getInput(): string
+    {
+        return $this->input;
     }
 
     /**
@@ -51,21 +79,13 @@ class InputBuffer
      */
     public function getCurrent(): string
     {
-        return substr($this->buffer, 0, $this->pos);
-    }
-
-    /**
-     * @return string
-     */
-    public function getValue(): string
-    {
-        return $this->prompt . $this->buffer;
+        return substr($this->input, 0, $this->pos);
     }
 
     public function insert(string $value)
     {
         $l = strlen($value);
-        $this->buffer = implode("", [substr($this->buffer, 0, $this->pos), $value, substr($this->buffer, $this->pos)]);
+        $this->input = implode("", [substr($this->input, 0, $this->pos), $value, substr($this->input, $this->pos)]);
         $this->next($l);
     }
 
@@ -78,7 +98,7 @@ class InputBuffer
 
     public function next(int $step = 1)
     {
-        if (($this->pos + ($step - 1)) < strlen($this->buffer)) {
+        if (($this->pos + ($step - 1)) < strlen($this->input)) {
             $this->pos = $this->pos + $step;
         }
     }
@@ -94,7 +114,7 @@ class InputBuffer
     public function removeChar()
     {
         if (!$this->isEmpty()) {
-            $this->buffer =  substr($this->buffer, 0, $this->pos - 1) . substr($this->buffer, $this->pos);
+            $this->input =  substr($this->input, 0, $this->pos - 1) . substr($this->input, $this->pos);
             $this->pos--;
 
             return true;
@@ -105,7 +125,7 @@ class InputBuffer
 
     public function isEmpty()
     {
-        return $this->buffer === self::EMPTY;
+        return $this->input === self::EMPTY;
     }
 
 }
