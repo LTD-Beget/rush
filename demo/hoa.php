@@ -10,7 +10,7 @@ require '../vendor/autoload.php';
 //} while (false !== $line && 'quit' !== $line);
 
 //$input = 'command "some arg fdfsd';
-$input = 'command some --name= --city="moscow"';
+$input = 'command some -n --name --city="moscow"';
 
 
 //var_dump(substr_count($input, "\""));
@@ -20,12 +20,12 @@ $input = 'command some --name= --city="moscow"';
 
 
 
-//$parser = new \Hoa\Console\Parser();
+$parser = new \Hoa\Console\Parser();
 //$parser->
-//$parser->parse($input);
+$parser->parse($input);
 
-//var_dump($parser->getInputs());
-//var_dump($parser->getSwitches());
+var_dump($parser->getInputs());
+var_dump($parser->getSwitches());
 
 //$arr = [
 //    'one' => "dn",
@@ -41,20 +41,20 @@ $input = 'command some --name= --city="moscow"';
 ////
 ////var_dump($last[0]);
 
-echo
-'abcdef', "\n",
-'ghijkl', "\n",
-'mnopqr', "\n",
-'stuvwx';
-
-sleep(3);
-Hoa\Console\Cursor::move('↑');
-sleep(1);
-Hoa\Console\Cursor::move('↑ ←');
-sleep(5);
-Hoa\Console\Cursor::move('left', 3);
-echo "inject";
-sleep(2);
-Hoa\Console\Cursor::move('DOWN');
-sleep(1);
-Hoa\Console\Cursor::move('→', 4);
+//echo
+//'abcdef', "\n",
+//'ghijkl', "\n",
+//'mnopqr', "\n",
+//'stuvwx';
+//
+//sleep(3);
+//Hoa\Console\Cursor::move('↑');
+//sleep(1);
+//Hoa\Console\Cursor::move('↑ ←');
+//sleep(5);
+//Hoa\Console\Cursor::move('left', 3);
+//echo "inject";
+//sleep(2);
+//Hoa\Console\Cursor::move('DOWN');
+//sleep(1);
+//Hoa\Console\Cursor::move('→', 4);

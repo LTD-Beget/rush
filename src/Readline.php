@@ -138,21 +138,8 @@ class Readline
     protected function bindLF(Readline $self)
     {
         if ($self->window->isActive()) {
-            $value = $self->window->getValue();
-            $current = $this->buffer->getCurrent();
+            $this->processComplete();
 
-            $info = new InputInfo($current);
-            //TODO Рассмотреть что дополняем и по ситуации ставить в конце пробел и смещать курсор за скобки,
-            // если это например значение опции
-            //TODO всего три кейса: аргумент, опция, значение опции
-            // пока только аргумент
-            // в буффер должна быть вставка с учетом внутренней позиции
-            $current = $info->getCurrent();
-            $offset = ($current !== InputBuffer::EMPTY) ? strlen($current) : 0;
-            $complition = substr($value, $offset);
-            $this->buffer->insert($complition);
-
-            $this->resetWindow();
         } else {
             // код запуска команды
 
@@ -182,12 +169,31 @@ class Readline
 
     protected function bindArrowLeft(Readline $self)
     {
-        $this->buffer->prev();
+        $self->buffer->prev();
     }
 
     protected function resetWindow()
     {
         $this->window->loadContent($this->getComplete());
+    }
+
+    protected function processComplete()
+    {
+        $value = $this->window->getValue();
+        $current = $this->buffer->getCurrent();
+
+        $info = new InputInfo($current);
+        //TODO Рассмотреть что дополняем и по ситуации ставить в конце пробел и смещать курсор за скобки,
+        // если это например значение опции
+        //TODO всего три кейса: аргумент, опция, значение опции
+        // пока только аргумент
+        // в буффер должна быть вставка с учетом внутренней позиции
+        $current = $info->getCurrent();
+        $offset = ($current !== InputBuffer::EMPTY) ? strlen($current) : 0;
+        $complition = substr($value, $offset);
+        $this->buffer->insert($complition);
+
+        $this->resetWindow();
     }
 
     protected function printBuffer()

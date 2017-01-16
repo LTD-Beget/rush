@@ -32,6 +32,7 @@ class TestCompleter implements CompleteInterface
             return $this->getArguments();
         }
 
+        return [];
     }
 
     public function getCommands()

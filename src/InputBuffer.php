@@ -94,7 +94,7 @@ class InputBuffer
     public function removeChar()
     {
         if (!$this->isEmpty()) {
-            $this->buffer = substr($this->buffer, 0, -1);
+            $this->buffer =  substr($this->buffer, 0, $this->pos - 1) . substr($this->buffer, $this->pos);
             $this->pos--;
 
             return true;
