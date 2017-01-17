@@ -159,7 +159,11 @@ class Readline
 
     protected function handlerTab(Readline $self)
     {
-        //TODO minComplete
+        $info = $self->buffer->getInputInfo();
+        $current = $info->getCurrent();
+        $data = $this->getComplete();
+
+        $this->buffer->insert($this->getCommonString($current, $data));
     }
 
     protected function handlerLF(Readline $self)
@@ -274,6 +278,42 @@ class Readline
     protected function getComplete(): array
     {
         return $this->completer->complete($this->buffer->getInputInfo());
+    }
+
+
+    /**
+     * TODO temp decision, make prefix tree in future
+     *
+     * @param string $pattern
+     * @param array $data
+     * @return string
+     */
+    protected function getCommonString(string $pattern, array $data): string
+    {
+        $data = array_filter($data, function ($item) use ($pattern) {
+            return strpos($item, $pattern) === 0;
+        });
+
+        $max = min(array_map('mb_strlen', $data));
+
+        $word = array_pop($data);
+
+        $result = "";
+
+        for ($i = strlen($pattern); $i < $max; $i++) {
+
+            $char = $word[$i];
+
+            foreach ($data as $item) {
+                if ($item[$i] !== $char) {
+                    break 2;
+                }
+            }
+
+            $result .= $char;
+        }
+
+        return $result;
     }
 
 }
